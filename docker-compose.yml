@@ -1,0 +1,59 @@
+services:
+  # Servizio Web Server (Nginx o Apache) - Nginx è più leggero e performante
+  web:
+    image: nginx:latest # O 'httpd:latest' per Apache
+    ports:
+      - "80:80" # Mappa la porta 80 del tuo PC alla porta 80 del container
+    volumes:
+      - ./app:/var/www/html # Monta la tua cartella 'app' nel percorso del server web del container
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf # File di configurazione di Nginx
+    depends_on:
+      - php # Assicura che PHP sia avviato prima di Nginx
+    networks:
+      - app-network
+
+  # Servizio PHP-FPM
+  php:
+    build:
+      context: ./php # Cerca il Dockerfile nella cartella 'php'
+      dockerfile: Dockerfile # Il nome del Dockerfile
+    volumes:
+      - ./app:/var/www/html # Monta la tua cartella 'app' (con i tuoi file PHP) nel container PHP
+    networks:
+      - app-network
+
+  # Servizio Database MySQL
+  db:
+    image: mysql:8.0 # Puoi specificare una versione, es. mysql:5.7
+    ports:
+      - "3306:3306" # Mappa la porta 3306 del tuo PC alla porta 3306 del container
+    environment:
+      MYSQL_ROOT_PASSWORD: admin # CAMBIA QUESTA PASSWORD!
+      MYSQL_DATABASE: supermercato # Il tuo nome del database
+      MYSQL_USER: admin # Il tuo utente per il database
+      MYSQL_PASSWORD: admin # La tua password per il database
+    volumes:
+      - dbdata:/var/lib/mysql # Per persistere i dati del database (non perderli se il container si ferma)
+    networks:
+      - app-network
+
+  # Servizio phpMyAdmin (per gestire il database tramite interfaccia web)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8080:80" # Accedi a phpMyAdmin da http://localhost:8080
+    environment:
+      PMA_HOST: db # Il nome del servizio del database definito in questo stesso docker-compose.yml
+      MYSQL_ROOT_PASSWORD: admin # La stessa password di root del servizio 'db'
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+# Definizione delle reti e dei volumi
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  dbdata: # Il volume per i dati del database
