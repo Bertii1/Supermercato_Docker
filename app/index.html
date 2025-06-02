@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        // Applica subito la dark mode per evitare flash
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark-preload');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Supermercato - Login</title>
+    <link rel="stylesheet" href="Dashboard/dashboard.css">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <header>
+        <h1>Benvenuto al Sistema Supermercato</h1>
+    </header>
+    <main>
+        <div class="login-container">
+            <div class="login-header">
+                <h2>Accedi</h2>
+            </div>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-button">Accedi</button>
+            </form>
+            <button class="guest-btn" onclick="location.href='Dashboard/dashboard.html?username=Ospite'">Accedi come ospite</button>
+            <button class="register-btn" onclick="location.href='register/register.html'">Registrati</button>
+            <button id="toggle-dark">🌙/☀️</button>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2025 Filippo Berti</p>
+    </footer>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            fetch('api/login.php', { // API endpoint for login
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: username, password: password })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(`HTTP error! status: ${response.status}, message: ${text}`); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Login avvenuto con successo!');
+                    // Redirect based on role
+                    if (data.role === 'admin') {
+                        window.location.href = 'admin.html'; // Assuming admin.html is in the same directory
+                    } else { // user or any other role
+                        window.location.href = `Dashboard/dashboard.html?username=${encodeURIComponent(username)}`;
+                    }
+                } else {
+                    alert('Login fallito: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+                alert('Si è verificato un errore durante il login: ' + error.message);
+            });
+        });
+
+        // Apply dark mode immediately to avoid flashes
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark-preload');
+        }
+
+        // Toggle dark mode
+        document.getElementById('toggle-dark').onclick = function() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+            // Remove dark-preload class once the user interacts or dark mode is confirmed
+            document.documentElement.classList.remove('dark-preload');
+        };
+
+        // Apply dark mode if already active on load
+        if (localStorage.getItem('darkMode') === 'true' && !document.documentElement.classList.contains('dark-preload')) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</body>
+</html>
