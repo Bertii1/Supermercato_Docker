@@ -286,8 +286,7 @@ function displayCart() {
  * Clears the entire cart after user confirmation.
  */
 async function clearCart() {
-  const confirmed = await showCustomModal('Sei sicuro di voler svuotare il carrello?', true);
-  if (confirmed) {
+  if (confirm("sicuro che vuoi svuotare il carrello")) {
     cart = [];
     displayCart();
     saveCartForUser(); // Save empty cart
