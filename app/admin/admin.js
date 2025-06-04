@@ -3,6 +3,7 @@ let selectedProductId = null; // To keep track of the product selected in the ta
 
 // Helper to get form values
 function getProductFormData() {
+  const element = document.getElementById("productImage");
   return {
     codice: document.getElementById('productId').value ? parseInt(document.getElementById('productId').value) : null,
     descrizione: document.getElementById('productName').value,
@@ -10,7 +11,6 @@ function getProductFormData() {
     categoria: document.getElementById('productCategory').value,
     tipo: document.getElementById('productType').value,
     calorie: document.getElementById('productCalories').value ? parseInt(document.getElementById('productCalories').value) : null,
-    immagine_url: document.getElementById('productImageUrl').value
   };
 }
 
@@ -22,8 +22,12 @@ function setProductFormData(product) {
   document.getElementById('productCategory').value = product.categoria || '0';
   typeElementFill(); // Populate types based on category
   document.getElementById('productType').value = product.tipo || '';
-  document.getElementById('productCalories').value = product.calorie || '';
-  document.getElementById('productImageUrl').value = product.immagine_url || '';
+  if (product.calorie != null) {
+    document.getElementById('Calorie-div').style.opacity = 100;
+    document.getElementById('productCalories').value = product.calorie || '';
+  } else {
+    document.getElementById('Calorie-div').style.opacity = 0;
+  }
   selectedProductId = product.codice;
 }
 
@@ -35,7 +39,6 @@ function clearForm() {
   document.getElementById('productCategory').value = '0';
   document.getElementById('productType').innerHTML = ''; // Clear types
   document.getElementById('productCalories').value = '';
-  document.getElementById('productImageUrl').value = '';
   selectedProductId = null;
   // Remove selected class from table rows
   const rows = document.querySelectorAll('#productsTable tbody tr');
@@ -56,10 +59,10 @@ function typeElementFill() {
   }
 
   if (types.length > 0) {
-    types.forEach(type => {
+    types.forEach(cazzo => {
       const option = document.createElement('option');
-      option.value = type;
-      option.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+      option.value = cazzo;
+      option.textContent = cazzo.charAt(0).toUpperCase() + cazzo.slice(1);
       typeSelect.appendChild(option);
     });
   } else {
@@ -95,19 +98,19 @@ function downloadProducts() {
       });
     })
     .then(data => {
-        if (data.status === 'info' || data.status === 'error') {
-            // Se il server risponde con un messaggio informativo (es. 404 "Nessun prodotto trovato")
-            // o un errore, gestiscilo come un errore ma azzera i prodotti.
-            console.warn('Avviso dal server:', data.message);
-            products = []; // Nessun prodotto trovato
-            renderProducts();
-        } else if (Array.isArray(data)) {
-            products = data;
-            renderProducts();
-            console.log('Prodotti caricati:', products);
-        } else {
-            throw new Error('Formato dati non valido dal server.');
-        }
+      if (data.status === 'info' || data.status === 'error') {
+        // Se il server risponde con un messaggio informativo (es. 404 "Nessun prodotto trovato")
+        // o un errore, gestiscilo come un errore ma azzera i prodotti.
+        console.warn('Avviso dal server:', data.message);
+        products = []; // Nessun prodotto trovato
+        renderProducts();
+      } else if (Array.isArray(data)) {
+        products = data;
+        renderProducts();
+        console.log('Prodotti caricati:', products);
+      } else {
+        throw new Error('Formato dati non valido dal server.');
+      }
     })
     .catch(error => {
       console.error('Errore nel caricamento dei dati:', error);
@@ -132,11 +135,12 @@ function renderProducts() {
   products.forEach(product => {
     const row = tableBody.insertRow();
     row.dataset.id = product.codice; // Store product ID on the row
-
+    const imgurl = `../media/${product.descrizione.toLowerCase()}.png`;
     row.insertCell().textContent = product.codice;
+    console.log(imgurl);
     const imgCell = row.insertCell();
     const img = document.createElement('img');
-    img.src = product.immagine_url || '../media/placeholder.png'; // Default placeholder image
+    img.src = `../media/${product.descrizione.toLowerCase()}.jpg` || '../media/placeholder.png'; // Default placeholder image
     img.alt = product.descrizione;
     img.className = 'product-image-preview';
     imgCell.appendChild(img);
@@ -194,25 +198,26 @@ function addProduct() {
     },
     body: JSON.stringify(formData)
   })
-  .then(response => {
-    if (!response.ok) {
+    .then(response => {
+      if (!response.ok) {
         return response.text().then(text => { throw new Error(`HTTP error! status: ${response.status}, message: ${text}`); });
-    }
-    return response.json();
-  })
-  .then(data => {
-    if (data.status === 'success') {
-      alert(data.message);
-      clearForm();
-      downloadProducts(); // Reload products to show the new one
-    } else {
-      alert('Errore durante l\'aggiunta del prodotto: ' + data.message);
-    }
-  })
-  .catch(error => {
-    console.error('Errore:', error);
-    alert('Si è verificato un errore durante l\'aggiunta del prodotto: ' + error.message);
-  });
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.status === 'success') {
+        alert(data.message);
+        clearForm();
+        downloadProducts();
+        renderProducts(); // Reload products to show the new one
+      } else {
+        alert('Errore durante l\'aggiunta del prodotto: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Errore:', error);
+      alert('Si è verificato un errore durante l\'aggiunta del prodotto: ' + error.message);
+    });
 }
 
 // Save (update) an existing product
@@ -251,10 +256,10 @@ function saveProduct() {
   })
     .then(response => {
       console.log(data);
-        if (!response.ok) {
-            return response.json().then(err => { throw new Error(err.message || 'Errore del server'); });
-        }
-        return response.json();
+      if (!response.ok) {
+        return response.json().then(err => { throw new Error(err.message || 'Errore del server'); });
+      }
+      return response.json();
     })
     .then(result => {
       console.log('Risposta aggiornamento prodotto:', result);
@@ -270,9 +275,9 @@ function saveProduct() {
       console.error('Errore nella richiesta PUT per aggiornamento prodotto:', error);
       alert('Errore di rete o del server: ' + error.message);
     });
-    alert("run");
-    downloadProducts();
-    renderProducts();
+  alert("run");
+  downloadProducts();
+  renderProducts();
 }
 
 // Assicurati che 'selectedProductId' sia gestito correttamente quando selezioni un prodotto nella tabella.
@@ -305,10 +310,10 @@ function deleteProduct() {
     method: 'DELETE' // Metodo DELETE
   })
     .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { throw new Error(err.message || 'Errore del server'); });
-        }
-        return response.json();
+      if (!response.ok) {
+        return response.json().then(err => { throw new Error(err.message || 'Errore del server'); });
+      }
+      return response.json();
     })
     .then(result => {
       console.log('Risposta eliminazione prodotto:', result);
@@ -354,11 +359,11 @@ function uploadProducts() {
     body: JSON.stringify(data)
   })
     .then(response => {
-        if (!response.ok) {
-            // Controlla se la risposta non è OK (es. 400, 500)
-            return response.json().then(err => { throw new Error(err.message || 'Errore del server'); });
-        }
-        return response.json();
+      if (!response.ok) {
+        // Controlla se la risposta non è OK (es. 400, 500)
+        return response.json().then(err => { throw new Error(err.message || 'Errore del server'); });
+      }
+      return response.json();
     })
     .then(result => {
       console.log('Risposta aggiunta prodotto:', result);
@@ -375,6 +380,73 @@ function uploadProducts() {
       alert('Errore di rete o del server: ' + error.message);
     });
 }
+function setupFileUploadForm() {
+  const uploadForm = document.getElementById('uploadForm');
+  const uploadStatus = document.getElementById('uploadStatus');
+
+  // Ensure the form element exists before attaching the event listener
+  if (uploadForm) {
+    uploadForm.addEventListener('submit', async (event) => {
+      // Prevent the default form submission behavior (page reload)
+      event.preventDefault();
+
+      // Show a loading message
+      uploadStatus.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+      uploadStatus.classList.add('bg-blue-100', 'text-blue-700');
+      uploadStatus.textContent = 'Caricamento in corso...';
+
+      // Create a FormData object from the form data
+      const formData = new FormData(uploadForm);
+
+      try {
+        // Send the asynchronous request to your PHP script
+        const response = await fetch('../api/upload.php', {
+          method: 'POST',
+          body: formData // FormData automatically handles the Content-Type header for file uploads
+        });
+
+        // Check if the HTTP response was successful
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Errore HTTP! Stato: ${response.status}, Messaggio: ${errorText}`);
+        }
+
+        // Parse the JSON response from the PHP script
+        const data = await response.json();
+
+        // Update the status message based on the PHP response
+        if (data.status === 'success') {
+          uploadStatus.classList.remove('bg-blue-100', 'text-blue-700', 'bg-red-100', 'text-red-700');
+          uploadStatus.classList.add('bg-green-100', 'text-green-700');
+          renderProducts();
+          uploadStatus.textContent = `Upload completato: ${data.file_path || 'Nessun percorso restituito'}`;
+          // Here you can do something with data.file_path, e.g., display the image
+          console.log('File caricato con successo:', data.file_path);
+          // Reset the form after a successful upload
+          uploadForm.reset();
+        } else {
+          uploadStatus.classList.remove('bg-blue-100', 'text-blue-700', 'bg-green-100', 'text-green-700');
+          uploadStatus.classList.add('bg-red-100', 'text-red-700');
+          uploadStatus.textContent = `Errore nell'upload: ${data.message || 'Errore sconosciuto dal server.'}`;
+          console.error('Errore dal server:', data.message);
+        }
+
+      } catch (error) {
+        // Handle network errors or errors thrown during processing
+        uploadStatus.classList.remove('bg-blue-100', 'text-blue-700', 'bg-green-100', 'text-green-700');
+        uploadStatus.classList.add('bg-red-100', 'text-red-700');
+        uploadStatus.textContent = `Errore di rete o elaborazione: ${error.message}`;
+        console.error('Errore durante l\'upload:', error);
+      } finally {
+        // Ensure the status message is visible
+        uploadStatus.classList.remove('hidden');
+      }
+    });
+  }
+}
+
+// Call the setup function once the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', setupFileUploadForm);
 
 // Initial load of products when the page loads
 document.addEventListener('DOMContentLoaded', () => {

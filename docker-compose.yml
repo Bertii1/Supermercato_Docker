@@ -18,7 +18,8 @@ services:
       context: ./php # Cerca il Dockerfile nella cartella 'php'
       dockerfile: Dockerfile # Il nome del Dockerfile
     volumes:
-      - ./app:/var/www/html # Monta la tua cartella 'app' (con i tuoi file PHP) nel container PHP
+      - ./app:/var/www/html
+      - ./php/uploads.ini # Monta la tua cartella 'app' (con i tuoi file PHP) nel container PHP
     networks:
       - app-network
 
