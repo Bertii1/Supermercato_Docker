@@ -264,7 +264,7 @@ function displayCart() {
     const cartItemDiv = document.createElement('div');
     cartItemDiv.className = 'cart-item bg-white p-3 rounded-lg shadow-sm flex items-center justify-between mb-2';
     cartItemDiv.innerHTML = `
-        <img src="${`../media/${product.descrizione.toLowerCase()}.jpg` || '../media/placeholder.png'}" alt="${item.descrizione}" class="cart-item-image-styled">
+        <img src="${`../media/${item.descrizione.toLowerCase()}.jpg` || '../media/placeholder.png'}" alt="${item.descrizione}" class="cart-item-image-styled">
         <div class="flex-grow">
             <h4 class="font-semibold text-gray-800">${item.descrizione}</h4>
             <p class="text-gray-600 text-sm">€${parseFloat(item.prezzo).toFixed(2)} x ${item.quantity}</p>
