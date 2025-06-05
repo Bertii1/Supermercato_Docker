@@ -140,7 +140,16 @@ function renderProducts() {
     console.log(imgurl);
     const imgCell = row.insertCell();
     const img = document.createElement('img');
-    img.src = `../media/${product.descrizione.toLowerCase()}.jpg` || '../media/placeholder.png'; // Default placeholder image
+    img.onerror = function() {
+      // If JPG fails, try PNG
+      const pngUrl = `../media/${product.descrizione.toLowerCase()}.png`;
+      img.onerror = function() {
+        // If both fail, use placeholder
+        img.src = '../media/placeholder.png';
+      };
+      img.src = pngUrl;
+    };
+    img.src = `../media/${product.descrizione.toLowerCase()}.jpg`;
     img.alt = product.descrizione;
     img.className = 'product-image-preview';
     imgCell.appendChild(img);
@@ -191,7 +200,9 @@ function addProduct() {
     return;
   }
 
-  fetch("../api/products.php", { // Use prodottiSet.php for adding products
+  console.log('Sending data:', formData); // Debug log
+
+  fetch("../api/products.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json; charset=utf-8"
@@ -199,23 +210,29 @@ function addProduct() {
     body: JSON.stringify(formData)
   })
     .then(response => {
-      if (!response.ok) {
-        return response.text().then(text => { throw new Error(`HTTP error! status: ${response.status}, message: ${text}`); });
-      }
-      return response.json();
+      console.log('Response status:', response.status); // Debug log
+      return response.text().then(text => {
+        console.log('Raw server response:', text); // Debug log
+        try {
+          return JSON.parse(text);
+        } catch (e) {
+          console.error('Failed to parse server response:', text);
+          throw new Error('Errore nella risposta del server');
+        }
+      });
     })
     .then(data => {
+      console.log('Parsed response:', data); // Debug log
       if (data.status === 'success') {
         alert(data.message);
         clearForm();
         downloadProducts();
-        renderProducts(); // Reload products to show the new one
       } else {
-        alert('Errore durante l\'aggiunta del prodotto: ' + data.message);
+        throw new Error(data.message || 'Errore durante l\'aggiunta del prodotto');
       }
     })
     .catch(error => {
-      console.error('Errore:', error);
+      console.error('Error details:', error);
       alert('Si è verificato un errore durante l\'aggiunta del prodotto: ' + error.message);
     });
 }
@@ -275,7 +292,6 @@ function saveProduct() {
       console.error('Errore nella richiesta PUT per aggiornamento prodotto:', error);
       alert('Errore di rete o del server: ' + error.message);
     });
-  alert("run");
   downloadProducts();
   renderProducts();
 }

@@ -14,13 +14,10 @@
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
-    <header>
-        <h1>Benvenuto al Sistema Supermercato</h1>
-    </header>
     <main>
         <div class="login-container">
             <div class="login-header">
-                <h2>Accedi</h2>
+                <h2>Gestione Supermercato</h2>
             </div>
             <form id="loginForm">
                 <div class="input-group">
@@ -38,7 +35,7 @@
             <button id="toggle-dark">🌙/☀️</button>
         </div>
     </main>
-    <footer>
+    <footer style="text-align: center; width: 100%; position: fixed; bottom: 0; left: 0; padding: 10px;">
         <p>&copy; 2025 Filippo Berti</p>
     </footer>
     <script>
@@ -48,7 +45,7 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
-            fetch('api/login.php', { // API endpoint for login
+            fetch('api/users.php?action=login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -66,7 +63,7 @@
                     alert('Login avvenuto con successo!');
                     // Redirect based on role
                     if (data.role === 'admin') {
-                        window.location.href = 'admin.html'; // Assuming admin.html is in the same directory
+                        window.location.href = 'admin/admin.html'; // Assuming admin.html is in the same directory
                     } else { // user or any other role
                         window.location.href = `Dashboard/dashboard.html?username=${encodeURIComponent(username)}`;
                     }

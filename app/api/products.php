@@ -69,19 +69,35 @@ try {
             break;
 
         case 'POST':
-            // Aggiungi un nuovo prodotto
+            // Debug log
+            error_log('Received POST data: ' . file_get_contents("php://input"));
+            
             $input = json_decode(file_get_contents("php://input"), true);
-
-            if (!isset($input['descrizione'], $input['prezzo'], $input['tipo'], $input['categoria'], $input['calorie'])) {
+            
+            // Validate JSON parsing
+            if (json_last_error() !== JSON_ERROR_NONE) {
                 http_response_code(400);
-                $response = ['status' => 'error', 'message' => 'Dati mancanti per l\'aggiunta del prodotto.'];
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Invalid JSON data: ' . json_last_error_msg()
+                ]);
                 break;
             }
 
-            $descrizione = filter_var($input['descrizione'], FILTER_SANITIZE_STRING);
+            if (!isset($input['descrizione'], $input['prezzo'], $input['tipo'], $input['categoria'])) {
+                http_response_code(400);
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Dati mancanti per l\'aggiunta del prodotto'
+                ]);
+                break;
+            }
+
+            // Replace deprecated FILTER_SANITIZE_STRING
+            $descrizione = htmlspecialchars(trim($input['descrizione']), ENT_QUOTES, 'UTF-8');
             $prezzo = filter_var($input['prezzo'], FILTER_VALIDATE_FLOAT);
-            $tipo = filter_var($input['tipo'], FILTER_SANITIZE_STRING);
-            $categoria = filter_var($input['categoria'], FILTER_SANITIZE_STRING);
+            $tipo = htmlspecialchars(trim($input['tipo']), ENT_QUOTES, 'UTF-8');
+            $categoria = htmlspecialchars(trim($input['categoria']), ENT_QUOTES, 'UTF-8');
             $calorie = filter_var($input['calorie'], FILTER_VALIDATE_INT);
 
             if ($prezzo === false || $prezzo < 0) {
@@ -125,10 +141,10 @@ try {
             }
 
             $codice = filter_var($input['codice'], FILTER_VALIDATE_INT);
-            $descrizione = filter_var($input['descrizione'], FILTER_SANITIZE_STRING);
+            $descrizione = htmlspecialchars(trim($input['descrizione']), ENT_QUOTES, 'UTF-8');
             $prezzo = filter_var($input['prezzo'], FILTER_VALIDATE_FLOAT);
-            $tipo = filter_var($input['tipo'], FILTER_SANITIZE_STRING);
-            $categoria = filter_var($input['categoria'], FILTER_SANITIZE_STRING);
+            $tipo = htmlspecialchars(trim($input['tipo']), ENT_QUOTES, 'UTF-8');
+            $categoria = htmlspecialchars(trim($input['categoria']), ENT_QUOTES, 'UTF-8');
             $calorie = filter_var($input['calorie'], FILTER_VALIDATE_INT);
 
             if ($codice === false || $codice <= 0) {

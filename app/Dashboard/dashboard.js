@@ -353,7 +353,7 @@ async function saveCartForUser() {
   console.log("Saving cart for user:", currentUsername, cart);
 
   try {
-    const response = await fetch('../api/cartSave.php', {
+    const response = await fetch('../api/cart.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -395,7 +395,7 @@ async function loadCartForUser() {
   console.log("Loading cart for user:", currentUsername);
 
   try {
-    const response = await fetch(`../api/cartGet.php?username=${encodeURIComponent(currentUsername)}`, {
+    const response = await fetch(`../api/cart.php?username=${encodeURIComponent(currentUsername)}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json'

@@ -41,11 +41,77 @@ try {
         case 'POST':
             $action = $_GET['action'] ?? null;
             if ($action === 'register') {
-                // Logica di registrazione utente qui
-                $response = ['status' => 'info', 'message' => 'Funzione di registrazione utente da implementare.'];
+                $data = json_decode(file_get_contents('php://input'), true);
+                $username = trim($data['username'] ?? '');
+                $password = $data['password'] ?? '';
+
+                if (empty($username) || empty($password)) {
+                    http_response_code(400);
+                    $response = ['status' => 'error', 'message' => 'Username e password sono richiesti'];
+                    break;
+                }
+
+                // Controlla se l'username è già in uso
+                $check = $conn->prepare("SELECT id FROM users WHERE username = ?");
+                $check->bind_param("s", $username);
+                $check->execute();
+                if ($check->get_result()->num_rows > 0) {
+                    http_response_code(409); // Conflict
+                    $response = ['status' => 'error', 'message' => 'Username già in uso'];
+                    break;
+                }
+
+                // Crea un nuovo utente
+                $password_hash = password_hash($password, PASSWORD_DEFAULT);
+                $stmt = $conn->prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)");
+                $stmt->bind_param("ss", $username, $password_hash);
+
+                if ($stmt->execute()) {
+                    $response = [
+                        'status' => 'success',
+                        'message' => 'Utente registrato con successo'
+                    ];
+                } else {
+                    http_response_code(500);
+                    $response = ['status' => 'error', 'message' => 'Errore durante la registrazione'];
+                }
             } elseif ($action === 'login') {
-                // Logica di login utente qui
-                $response = ['status' => 'info', 'message' => 'Funzione di login utente da implementare.'];
+                $data = json_decode(file_get_contents('php://input'), true);
+                $username = trim($data['username'] ?? '');
+                $password = $data['password'] ?? '';
+
+                if (empty($username) || empty($password)) {
+                    http_response_code(400);
+                    $response = ['status' => 'error', 'message' => 'Username e password sono richiesti'];
+                    break;
+                }
+
+                // Cerca l'utente nel database
+                $stmt = $conn->prepare("SELECT id, username, password_hash, role FROM users WHERE username = ?");
+                $stmt->bind_param("s", $username);
+                $stmt->execute();
+                $result = $stmt->get_result();
+
+                if ($result->num_rows === 0) {
+                    http_response_code(401);
+                    $response = ['status' => 'error', 'message' => 'Credenziali non valide'];
+                    break;
+                }
+
+                $user = $result->fetch_assoc();
+                
+                // Verifica la password
+                if (password_verify($password, $user['password_hash'])) {
+                    $response = [
+                        'status' => 'success',
+                        'message' => 'Login effettuato con successo',
+                        'role' => $user['role'],
+                        'username' => $user['username']
+                    ];
+                } else {
+                    http_response_code(401);
+                    $response = ['status' => 'error', 'message' => 'Credenziali non valide'];
+                }
             } else {
                 http_response_code(400);
                 $response = ['status' => 'error', 'message' => 'Azione POST per utenti non specificata o non valida.'];
