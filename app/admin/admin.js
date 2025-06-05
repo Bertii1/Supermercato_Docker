@@ -469,16 +469,3 @@ document.addEventListener('DOMContentLoaded', () => {
   downloadProducts();
   typeElementFill(); // Initialize type dropdown
 });
-
-// Dark mode logic (reused from index.html)
-if (localStorage.getItem('darkMode') === 'true') {
-  document.documentElement.classList.add('dark-preload');
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Apply dark mode if already active on load and remove preload class
-  if (localStorage.getItem('darkMode') === 'true') {
-    document.documentElement.classList.add('dark');
-  }
-  document.documentElement.classList.remove('dark-preload');
-});
