@@ -467,5 +467,5 @@ document.addEventListener('DOMContentLoaded', setupFileUploadForm);
 // Initial load of products when the page loads
 document.addEventListener('DOMContentLoaded', () => {
   downloadProducts();
-  typeElementFill(); // Initialize type dropdown
+  typeElementFill(); 
 });
